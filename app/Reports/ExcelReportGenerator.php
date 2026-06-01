@@ -1,38 +1,21 @@
 <?php
 namespace App\Reports;
 
-// Solo el paso 'format' varía. Los otros 4 pasos son idénticos.
-class ExcelReportGenerator
+class ExcelReportGenerator extends ReportGenerator
 {
-    public function generate(array $params): string
-    {
-        // Paso 1: validar (duplicado en Pdf y Csv)
-        if (empty($params['from']) || empty($params['to'])) {
-            throw new \InvalidArgumentException('Date range required.');
-        }
-
-        // Paso 2: consultar datos (duplicado)
-        $orders = \App\Models\Order::whereBetween('created_at', [$params['from'], $params['to']])
-            ->with(['customer.user', 'vendor', 'items'])
-            ->get();
-
-        // Paso 3: formatear (ÚNICO paso que varía)
-        $content = $this->formatAsExcel($orders);
-
-        // Paso 4: persistir (duplicado)
-        $filename = 'report_' . now()->format('Ymd_His') . '.xlsx';
-        $path = storage_path("app/reports/{$filename}");
-        file_put_contents($path, $content);
-
-        // Paso 5: notificar (duplicado)
-        \App\Support\Logger::getInstance()->log("Excel report generated: {$filename}");
-
-        return $path;
-    }
-
-    private function formatAsExcel($orders): string
+    protected function format($orders): string
     {
         // Stub: retorna contenido binario dummy representando un xlsx vacío
         return "PK\x03\x04Excel stub with " . $orders->count() . " orders";
+    }
+
+    protected function getFilename(): string
+    {
+        return 'report_' . \now()->format('Ymd_His') . '.xlsx';
+    }
+
+    protected function getReportType(): string
+    {
+        return 'Excel';
     }
 }

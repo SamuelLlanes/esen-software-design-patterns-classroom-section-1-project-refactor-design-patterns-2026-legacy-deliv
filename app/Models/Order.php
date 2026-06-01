@@ -25,30 +25,40 @@ class Order extends Model
 
     public function transitionTo(string $newStatus): void
     {
-        $allowed = [
-            'created'   => ['paid', 'cancelled'],
-            'paid'      => ['accepted', 'cancelled', 'refunded'],
-            'accepted'  => ['preparing', 'cancelled'],
-            'preparing' => ['ready'],
-            'ready'     => ['picked_up'],
-            'picked_up' => ['delivered'],
-            'delivered' => ['refunded', 'cancelled'],
-            'cancelled' => [],
-            'refunded'  => [],
-        ];
+        $currentState = $this->getState();
 
-        if (!isset($allowed[$this->status])) {
-            throw new \Exception("Unknown current status: {$this->status}");
-        }
-
-        if (!in_array($newStatus, $allowed[$this->status])) {
-            throw new \Exception(
-                "Cannot transition from '{$this->status}' to '{$newStatus}'."
-            );
+        if (!$currentState->canTransitionTo($newStatus)) {
+            throw new \Exception("Cannot transition from '{$this->status}' to '{$newStatus}'.");
         }
 
         $this->status = $newStatus;
-        // Esto genera bugs cuando se olvida el save().
+        // Persist here to avoid bugs when callers forget to save after transition.
+        $this->save();
+    }
+
+    /**
+     * Return an OrderState instance representing the current status.
+     */
+    public function getState(): \App\Models\OrderState
+    {
+        switch ($this->status) {
+            case 'created':
+                return new \App\Models\States\PendingState();
+            case 'paid':
+                return new \App\Models\States\PaidState();
+            case 'delivered':
+                return new \App\Models\States\DeliveredState();
+            case 'cancelled':
+                return new \App\Models\States\CancelledState();
+            default:
+                throw new \Exception("Unknown current status: {$this->status}");
+        }
+    }
+
+    /** Execute a command against this order (Command pattern). */
+    public function executeCommand(\App\Models\Commands\OrderCommand $command): void
+    {
+        $command->execute($this);
     }
 
     public function validateOrder(): bool
