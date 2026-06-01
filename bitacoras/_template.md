@@ -78,21 +78,13 @@ State, quita el array $allowed de Order y mete la logica de
 entidad mas chica. Command, hace explicito el flujo y facilita meter pruebas o meter cosas como un proveedor de pagos en PayCommand sin tocar Order.
 
 app\Models\Order — mantiene los datos, delega y ejecuta comandos
-
 app\Models\OrderState — Interfaz del State
-
 App\Models\States\PendingState.php — ConcreteState: estado created
-
 App\Models\States\PaidState.php — ConcreteState: estado paid
-
 App\Models\States\CancelledState.php — ConcreteState: estado cancelled
-
 App\Models\States\DeliveredState.php — ConcreteState: estado delivered
-
 App\Models\Commands\OrderCommand — Interfaz Command
-
 App\Models\Commands\PayCommand — ConcreteCommand: comando para pagar (ejecuta transicion y efectos)
-
 App\Models\Commands\CancelCommand — ConcreteCommand: comando para cancelar
 
 _Conecta el patrón al problema específico de arriba. No copies la definición del libro — explica cómo los participantes del patrón (Context, Strategy, ConcreteStrategy, etc.) mapean a las clases que creaste o modificaste._
