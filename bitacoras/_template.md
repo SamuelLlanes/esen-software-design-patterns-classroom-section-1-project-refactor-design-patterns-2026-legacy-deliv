@@ -1,4 +1,4 @@
-# Bitácora · Mini-entrega N — [Título del patrón]
+#Bitácora · Mini-entrega N — [Título del patrón]
 
 **Nombre:** Carlos Samuel Llanes Cornejo
 **Fecha:** 29-5-2026
