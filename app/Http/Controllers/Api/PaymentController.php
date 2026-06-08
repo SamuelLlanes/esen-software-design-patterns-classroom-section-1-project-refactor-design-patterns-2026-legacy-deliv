@@ -65,14 +65,14 @@ class PaymentController extends Controller
                 $order->notify('paid');
             }
 
-            \App\Support\Logger::getInstance()->log(
+            app(\App\Support\Logger::class)->log(
                 "Payment " . ($success ? 'succeeded' : 'failed') . " for order {$order->id} via {$provider}"
             );
 
             return response()->json(['success' => $success, 'transaction_id' => $transactionId]);
 
         } catch (\Exception $e) {
-            \App\Support\Logger::getInstance()->log(
+            app(\App\Support\Logger::class)->log(
                 "Payment error order {$order->id}: " . $e->getMessage(), 'error'
             );
             return response()->json(['error' => 'Payment processing failed.'], 500);

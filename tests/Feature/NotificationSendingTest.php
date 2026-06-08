@@ -17,12 +17,11 @@ class NotificationSendingTest extends TestCase
 {
     use RefreshDatabase;
 
-    // SMELL: usa Logger::getInstance() directamente.
-    // El test falla si otro test anterior ya llenó el Logger con logs.
+    // SMELL: usa Logger directamente desde el contenedor en lugar de singleton.
     public function test_order_creation_sends_notification(): void
     {
-        $logger = Logger::getInstance();
-        $logger->clearLogs(); // necesario porque el Logger es global
+        $logger = app(Logger::class);
+        $logger->clearLogs();
 
         PaymentProvider::create(['name' => 'Wompi', 'api_endpoint' => 'x', 'api_key' => 'k', 'enabled' => true, 'priority' => 1]);
         $vendorUser = User::create(['name' => 'V', 'email' => 'vn@t.dev', 'password' => 'Password1', 'role' => 'vendor']);

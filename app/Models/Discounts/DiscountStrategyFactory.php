@@ -19,7 +19,7 @@ class DiscountStrategyFactory
     public static function resolve(string $type): DiscountStrategy
     {
         if (!isset(self::$strategies[$type])) {
-            Logger::getInstance()->log("Unknown discount type '{$type}'", 'warning');
+            app(\App\Support\Logger::class)->log("Unknown discount type '{$type}'", 'warning');
             throw new \InvalidArgumentException("Unknown discount type: {$type}");
         }
 

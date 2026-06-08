@@ -143,68 +143,15 @@ class Order extends Model
             }
         }
 
-        \App\Support\Logger::getInstance()->log("Order {$this->id} validated successfully.");
+        app(\App\Support\Logger::class)->log("Order {$this->id} validated successfully.");
         return true;
     }
 
     public function notify(string $event): void
     {
-        $emailService = new \App\Services\EmailService();
-        $smsService   = new \App\Services\SMSService();
-        $pushService  = new \App\Services\PushService();
+        app(\App\Services\Notifications\OrderNotificationDispatcher::class)
+            ->dispatch($this, $event);
 
-        if ($event === 'created') {
-            $emailService->send($this->customer->user->email, 'Pedido recibido',
-                "Tu pedido #{$this->id} ha sido recibido.");
-            $emailService->send($this->vendor->user->email, 'Nuevo pedido',
-                "Tienes un nuevo pedido #{$this->id}.");
-            $smsService->send($this->customer->user->phone ?? '',
-                "Pedido #{$this->id} confirmado.");
-
-        } elseif ($event === 'paid') {
-            $emailService->send($this->customer->user->email, 'Pago confirmado',
-                "Tu pago para el pedido #{$this->id} fue procesado.");
-            $pushService->send($this->customer->user->id, 'Pago recibido',
-                "Tu pago fue procesado exitosamente.");
-
-        } elseif ($event === 'accepted') {
-            $emailService->send($this->customer->user->email, 'Pedido aceptado',
-                "Tu pedido #{$this->id} está siendo preparado.");
-            $pushService->send($this->customer->user->id, 'Pedido aceptado',
-                "El restaurante aceptó tu pedido.");
-
-        } elseif ($event === 'preparing') {
-            $pushService->send($this->customer->user->id, 'Preparando tu pedido',
-                "Tu comida está siendo preparada.");
-
-        } elseif ($event === 'ready') {
-            if ($this->courier) {
-                $pushService->send($this->courier->user->id, 'Pedido listo para recoger',
-                    "El pedido #{$this->id} está listo.");
-            }
-
-        } elseif ($event === 'picked_up') {
-            $pushService->send($this->customer->user->id, 'Pedido en camino',
-                "¡Tu pedido está en camino!");
-            $smsService->send($this->customer->user->phone ?? '',
-                "Tu pedido #{$this->id} está en camino.");
-
-        } elseif ($event === 'delivered') {
-            $emailService->send($this->customer->user->email, 'Pedido entregado',
-                "Tu pedido #{$this->id} fue entregado. ¡Buen provecho!");
-            $pushService->send($this->customer->user->id, '¡Pedido entregado!',
-                "¡Disfruta tu pedido!");
-
-        } elseif ($event === 'cancelled') {
-            $emailService->send($this->customer->user->email, 'Pedido cancelado',
-                "Tu pedido #{$this->id} fue cancelado.");
-
-        } elseif ($event === 'refunded') {
-            $emailService->send($this->customer->user->email, 'Reembolso procesado',
-                "El reembolso de tu pedido #{$this->id} fue procesado.");
-        }
-
-        \App\Support\Logger::getInstance()->log("Order {$this->id} event dispatched: {$event}");
         $this->dispatchSideEffects($event);
     }
 

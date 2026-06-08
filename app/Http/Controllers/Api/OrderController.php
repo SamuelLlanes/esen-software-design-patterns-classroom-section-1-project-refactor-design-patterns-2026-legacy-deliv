@@ -95,7 +95,7 @@ class OrderController extends Controller
             $order->transitionTo($request->status);
             $order->save();            $order->notify($request->status);
 
-            \App\Support\Logger::getInstance()->log(
+            app(\App\Support\Logger::class)->log(
                 "Order {$order->id} status updated to {$request->status}"
             );
 

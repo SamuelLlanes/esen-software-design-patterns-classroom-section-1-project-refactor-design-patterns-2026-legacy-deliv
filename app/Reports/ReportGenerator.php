@@ -51,7 +51,7 @@ abstract class ReportGenerator
 
     protected function notify(string $filename): void
     {
-        \App\Support\Logger::getInstance()->log("{$this->getReportType()} report generated: {$filename}");
+        app(\App\Support\Logger::class)->log("{$this->getReportType()} report generated: {$filename}");
     }
 
     /**

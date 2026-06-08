@@ -116,7 +116,7 @@ class Notification extends Model
 
     private function doLog(string $content): void
     {
-        \App\Support\Logger::getInstance()->log(
+        app(\App\Support\Logger::class)->log(
             "Notification [{$this->channel}] to {$this->recipient_type}:{$this->recipient_id} - " .
             substr($content, 0, 60)
         );
