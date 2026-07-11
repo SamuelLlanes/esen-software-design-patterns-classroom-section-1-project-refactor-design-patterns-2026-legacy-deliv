@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Customer;
+use App\Services\OrderValidationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class OrderController extends Controller
 {
+    public function __construct(
+        private OrderValidationService $validationService,
+    ) {}
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -60,7 +64,9 @@ class OrderController extends Controller
 
         try {
             $customer = $user->customer;
-            $order    = $customer->placeOrder($validated, $validated['payment_method']);
+
+            $order = $customer->placeOrder($validated, $validated['payment_method']);
+            $this->validationService->validate($order);
 
             return response()->json([
                 'message' => 'Order placed successfully.',

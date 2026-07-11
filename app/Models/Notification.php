@@ -4,6 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Notifications\EmailNotification;
+use App\Notifications\SmsDecorator;
+use App\Notifications\PushDecorator;
+use App\Services\EmailService;
+use App\Services\SMSService;
+use App\Services\PushService;
 
 class Notification extends Model
 {
@@ -20,7 +26,6 @@ class Notification extends Model
         'sent_at'      => 'datetime',
     ];
 
-    // En lugar de Decorator apilable, usa flags en BD y condicionales.
     public function prepareContent(): string
     {
         $content = $this->content;
@@ -52,32 +57,38 @@ class Notification extends Model
     public function send(): bool
     {
         $this->attempts++;
-        $content = $this->prepareContent();
+
+        $this->content = $this->prepareContent();
+        $chain = $this->buildDecoratorChain();
 
         try {
-            if ($this->channel === 'email') {
-                $service = new \App\Services\EmailService();
-                $service->send($this->getRecipientEmail(), $this->subject, $content);
-            } elseif ($this->channel === 'sms') {
-                $service = new \App\Services\SMSService();
-                $service->send($this->getRecipientPhone(), $content);
-            } elseif ($this->channel === 'push') {
-                $service = new \App\Services\PushService();
-                $service->send($this->recipient_id, $this->subject, $content);
-            } elseif ($this->channel === 'whatsapp') {
-                $service = new \App\Services\WhatsAppService();
-                $service->send($this->getRecipientPhone(), $content);
-            }
+            $result = $chain->send($this);
 
             $this->sent    = true;
             $this->sent_at = now();
             $this->save();
-            return true;
+
+            return $result;
 
         } catch (\Exception $e) {
             $this->save();
             return false;
         }
+    }
+
+    private function buildDecoratorChain(): \App\Notifications\NotificationDecorator
+    {
+        $chain = new EmailNotification(new EmailService());
+
+        if (in_array($this->channel, ['sms', 'whatsapp', null], true)) {
+            $chain = new SmsDecorator($chain, new SMSService());
+        }
+
+        if (in_array($this->channel, ['push', null], true)) {
+            $chain = new PushDecorator($chain, new PushService());
+        }
+
+        return $chain;
     }
 
     private function getRecipientEmail(): string
